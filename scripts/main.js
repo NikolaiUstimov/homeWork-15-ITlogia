@@ -24,6 +24,10 @@ Promise.all(
     getUser();
     getUserDesignFigma();
     getUserSkillReact();
+    getUserAge();
+    getDevBackend();
+    getUserDesignPhotoshopAndFigma();
+    getDevelopmentTeam();
 })
 
 //Добавление названия города и специальности, вместо locationId и specializationId
@@ -45,54 +49,151 @@ function getCitiesArr() {
         delete item.personal.specializationId;
         return item;
     })
-    // console.log(result);
+    console.log(result);
+}
+
+//Функция создания HTML элемент
+function elementHTML(teg, text) {
+    let element = document.createElement(teg);
+    element.textContent = text;
+    return document.body.appendChild(element);
 }
 
 //Вывод информации о пользователях
 let i = 0;
 function getInfo() {
     i++;
-    // let userArr = [];
-    // userArr.push(`${i}) ${this.firstName} ${this.lastName}, г. ${this.city}`)
-    return console.log(`${i}) ${this.firstName} ${this.lastName}, г. ${this.city}`);
-   // return console.log(userArr);
+    let div = document.createElement("div");
+    div.textContent = `${i}) ${this.firstName} ${this.lastName}, г. ${this.city}`;
+    document.body.appendChild(div);
+    return div;
+    // return console.log(`${i}) ${this.firstName} ${this.lastName}, г. ${this.city}`)
 }
 
 //Проверка функции getInfo()
 function getUser() {
     persons.forEach(item => {
         // return getInfo.call(item.personal);
-    })
+    });
 }
 
 //Вывод информации о пользователях, владеющих Figma
 function getUserDesignFigma() {
     i = 0;
-    let userSkillFigmaArr = [];
+    elementHTML('p', "Пользователи, владеющие Figma");
     persons.forEach(item => {
         let userSkillFigma = item.skills.find(skillItem => {
             return skillItem.name.toLowerCase() === "figma";
-        })
+        });
         if (userSkillFigma && userSkillFigma.name) {
-            userSkillFigmaArr.push(userSkillFigma);
             return getInfo.call(item.personal);
         }
-    })
-    console.log(userSkillFigmaArr);
+    });
 }
 
+//Первый попавшийся разработчик, владеющий react
 function getUserSkillReact() {
     i = 0;
-    let userSkillReact = null;
+    elementHTML('p', "Первый пользователь из массива данных, владеющий React");
+    let userSkillReact = [];
     persons.forEach(item => {
         let skillsReact = item.skills.find(skill => {
             return skill.name.toLowerCase() === "react";
         })
-        if (skillsReact && skillsReact.name) {
-            userSkillReact  = skillsReact;
-            return getInfo.call(item.personal);
+        if (skillsReact) {
+            return userSkillReact.push(item);
         }
-        // console.log(userSkillReact);
+    });
+    getInfo.call(userSkillReact[0].personal);
+}
+
+//Проверка возраста пользователей
+function getUserAge() {
+    let index = 0;
+    let today = new Date();
+    let currentYear = today.getFullYear();
+    elementHTML('p', "Информация о возрасте пользователей");
+    persons.forEach(item => {
+        index++;
+        let dateParse = item.personal.birthday.split('.');
+        let userBirthday = new Date(+dateParse[2], +dateParse[1], +dateParse[0]);
+        let userYearDate = userBirthday.getFullYear();
+        if (currentYear - userYearDate > 18) {
+            return elementHTML('div', `${index}) ${item.personal.firstName} ${item.personal.lastName} старше 18 лет`);
+        }
+        if (currentYear - userYearDate < 18) {
+            return elementHTML('div', `${index}) ${item.personal.firstName} ${item.personal.lastName} младше 18 лет`);
+        }
+        if (currentYear - userYearDate === 18) {
+            return elementHTML('div', `${index}) ${item.personal.firstName} ${item.personal.lastName} возраст 18 лет`);
+        }
+    });
+}
+
+//backend-разработчики из Москвы с работой на полный день
+function getDevBackend() {
+    i = 0;
+    elementHTML('p', "Порядок зарплатных ожиданий backend-разработчиков из Москвы");
+    let newArr = [];
+    persons.forEach(item => {
+        let devFullDay = item.request.find(fullDay => {
+            if (fullDay.value === "Полная") {
+                return fullDay;
+            }
+        })
+        if (item.personal.city.toLowerCase() === "москва" && item.personal.specialization === "backend" && devFullDay.value === "Полная") {
+                return newArr.push(item);
+        }
+    });
+    newArr.map(item => {
+        let salaryDev = item.request.find(salary => {
+            if (salary.name === "Зарплата") {
+                return salary;
+            }
+        })
+        if (salaryDev) {
+            item.devSalary = salaryDev.value;
+            return item;
+        }
+    });
+    newArr.sort((a, b) => {
+        return a.devSalary - b.devSalary;
+    });
+    let index = 0;
+    newArr.forEach(item => {
+        index++;
+        return elementHTML('div', `${index}) ${item.personal.firstName} ${item.personal.lastName}, зарплата ${item.devSalary}р.`);
     })
-    console.log(userSkillReact);
+}
+
+//Дизайнеры, владеющие Photoshop и Figma одновременно на уровне не ниже 6 баллов
+function getUserDesignPhotoshopAndFigma() {
+    let des = persons.filter(item => {
+        let doubleSkill;
+        if (item.personal.specialization === "designer") {
+            doubleSkill = item.skills.find(skillItem => {
+                if ((skillItem.name === "Photoshop" && skillItem.level >= 6) || (skillItem.name === "Figma" && skillItem.level >= 6)) {
+                    return skillItem;
+                }
+            });
+        }
+        if (doubleSkill) {
+            return item;
+        }
+    });
+    // console.log(des);
+}
+
+//Сбор команды для разработки проекта
+function getDevelopmentTeam() {
+    let teamArr = [];
+    persons.forEach(item => {
+        let topFigma = item.skills.reduce((levelMax, figmaItem) => {
+            return levelMax.level > figmaItem.level ? levelMax : figmaItem;
+        })
+        if (item.personal.specialization === "designer" && topFigma) {
+            return teamArr.push(item);
+        }
+    })
+    console.log(teamArr);
 }
