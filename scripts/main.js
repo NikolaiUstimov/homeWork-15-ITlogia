@@ -214,7 +214,7 @@ function getDevelopmentTeam() {
     });
     getInfo.call(bestAngularDev.personal, elementHTML('span', "Лучший frontend-разработчик на Angular:"));
 
-    //Поиск лучшего frontend-разработчика, владеющего Angular
+    //Поиск лучшего backend-разработчика, владеющего Go
     let backendDev = persons.filter(item => {
         return item.personal.specialization === 'backend';
     });
